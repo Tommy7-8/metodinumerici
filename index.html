@@ -13,7 +13,7 @@
 		<div>
 			<h3>Funzione:</h3>
 			<label for="eq">f(x) =</label>
-			<input type="text" id="eq" value="5*sin(x)+x^2/10"></input>
+			<input type="text" id="eq" value="5*sin(x)+x**2/10"></input>
 		</div>
 		<div>
 			<h3>Integrazione:</h3>
@@ -25,7 +25,7 @@
 		<div>
 			<h3>Grafico:</h3>
 			<label for="sensibilita">Sensibilit&agrave;: </label>
-			<input type="number" id="sensibilita" value="0.1" min="0" max="1" step="0.01"></input>
+			<input type="number" id="sensibilita" value="0.1" min="0" max="1" step="0.001"></input>
 		</div>
 		<div>
 			<h3>Metodo Rettangoli:</h3>
@@ -94,7 +94,7 @@
 
 				const xValues = math.range(
 					math.min(-10,math.min(a, b) -1),
-					math.max(10, math.max(a, b) +1),
+					math.max(10, math.max(a, b) +1)+sensibilita,
 					sensibilita
 				).toArray();
 
@@ -129,10 +129,10 @@
 				Plotly.newPlot('plot', data);
 
 				// Metodo Retangoli
-				const h_rettangoli = (b-a)/n_rettangoli;
+				const h_rettangoli = (b-a)/parseFloat(n_rettangoli);
 				const x_rettangoli = math.range(
 					math.min(a, b),
-					math.max(a, b),
+					math.max(a, b)+h_rettangoli,
 					h_rettangoli
 				).toArray();
 				const y_rettangoli = x_rettangoli.map(function (X) {
@@ -147,21 +147,21 @@
 				const funzione_errore_rettangoli = math.derivative(stringa_funzione,'x');
 				x_errore_rettangoli = math.range(
 					math.min(a, b),
-					math.max(a, b),
+					math.max(a, b)+sensibilita,
 					sensibilita
 				).toArray();
-				y_errore_rettangoli = x_rettangoli.map(function (X) {
+				y_errore_rettangoli = x_errore_rettangoli.map(function (X) {
 					return funzione_errore_rettangoli.evaluate({ x: X })
 				});
 				const M_rettangoli = Math.max.apply(null, y_errore_rettangoli.map(Math.abs));
-				const errore_rettangoli = ((b-a)^2)/(n_rettangoli)*M_rettangoli;
+				const errore_rettangoli = parseFloat((b-a)**2)/parseFloat(2*n_rettangoli)*M_rettangoli;
 				document.getElementById('errore_rettangoli').innerHTML = errore_rettangoli;
 
 				// Metodo Trapezi
 				const h_trapezi = (b-a)/n_trapezi;
 				const x_trapezi = math.range(
 					math.min(a, b),
-					math.max(a, b),
+					math.max(a, b)+h_trapezi,
 					h_trapezi
 				).toArray();
 				const y_trapezi = x_trapezi.map(function (X) {
@@ -174,27 +174,27 @@
 				const funzione_errore_trapezi = math.derivative(math.derivative(stringa_funzione,'x'),'x');
 				x_errore_trapezi = math.range(
 					math.min(a, b),
-					math.max(a, b),
+					math.max(a, b)+sensibilita,
 					sensibilita
 				).toArray();
-				y_errore_trapezi = x_trapezi.map(function (X) {
+				y_errore_trapezi = x_errore_trapezi.map(function (X) {
 					return funzione_errore_trapezi.evaluate({ x: X })
 				});
 				const M_trapezi = Math.max.apply(null, y_errore_trapezi.map(Math.abs));
-				const errore_trapezi = ((b-a)^3)/(12*(n_trapezi)^2)*M_trapezi;
+				const errore_trapezi = parseFloat((b-a)**3)/parseFloat(12*(n_trapezi)**2)*M_trapezi;
 				document.getElementById('errore_trapezi').innerHTML = errore_trapezi;
 
 				// CAVALIERI SIMPSON (Metodo delle Parabole)
-				const h_simpson = (b-a)/(2*n_simpson);
+				const h_simpson = (b-a)/parseFloat(2*n_simpson);
 				const x_simpson = math.range(
 					math.min(a, b),
-					math.max(a, b),
+					math.max(a, b)+h_simpson,
 					h_simpson
 				).toArray();
 				const y_simpson = x_simpson.map(function (X) {
 					return funzione.evaluate({ x: X })
 				});
-				const result_simpson = h_simpson/3 * simpson(y_simpson);
+				const result_simpson = h_simpson/parseFloat(3) * simpson(y_simpson);
 				document.getElementById('result_simpson').innerHTML = result_simpson;
 
 
@@ -202,14 +202,14 @@
 				const funzione_errore_simpson = math.derivative(math.derivative(math.derivative(math.derivative(stringa_funzione,'x'),'x'),'x'),'x');
 				x_errore_simpson = math.range(
 					math.min(a, b),
-					math.max(a, b),
+					math.max(a, b)+sensibilita,
 					sensibilita
 				).toArray();
-				y_errore_simpson = x_simpson.map(function (X) {
+				y_errore_simpson = x_errore_simpson.map(function (X) {
 					return funzione_errore_simpson.evaluate({ x: X })
 				});
 				const M_simpson = Math.max.apply(null, y_errore_simpson.map(Math.abs));
-				const errore_simpson = ((b-a)^5)/(2880*(n_simpson)^4)*M_simpson;
+				const errore_simpson = ((b-a)**5)/parseFloat(2880*(n_simpson)**4)*M_simpson;
 				document.getElementById('errore_simpson').innerHTML = errore_simpson;
 			}
 			catch (err) {
