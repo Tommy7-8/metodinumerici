@@ -1,69 +1,230 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="utf-8">
-  <title>Metodo numerico</title>
-  <script src="https://unpkg.com/mathjs@6.6.1/dist/math.min.js"></script>
-  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-  <script src="https://github.com/processing/p5.js/releases/download/1.0.0/p5.min.js"></script>
+	<meta charset="utf-8">
+	<title>Metodo numerico</title>
+	<script src="https://unpkg.com/mathjs@6.6.1/dist/math.min.js"></script>
+	<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
+
 <body>
 	<form id="form">
-		<input type="text" id="eq" value="5*sin(x)+x^2/10"></input>
-		<input type="number" id="min" value="-5"></input>
-		<input type="number" id="max" value="5"></input>
-		<input type="number" id="sensibilita" value="0.1" min="0.001" max="1" step="0.01"></input>
-		<input type="submit" value="Draw" />
+		<div>
+			<h3>Funzione:</h3>
+			<label for="eq">f(x) =</label>
+			<input type="text" id="eq" value="5*sin(x)+x^2/10"></input>
+		</div>
+		<div>
+			<h3>Integrazione:</h3>
+			<label for="a">a = </label>
+			<input type="number" id="a" value="-5"></input>
+			<label for="b">b = </label>
+			<input type="number" id="b" value="5"></input>
+		</div>
+		<div>
+			<h3>Grafico:</h3>
+			<label for="sensibilita">Sensibilit&agrave;: </label>
+			<input type="number" id="sensibilita" value="0.1" min="0" max="1" step="0.01"></input>
+		</div>
+		<div>
+			<h3>Metodo Rettangoli:</h3>
+			<label for="n_rettangoli">N = </label>
+			<input type="number" id="n_rettangoli" min="1" value="100"></input>
+			<p>Risultato (dx): <span id="result_rettangoli_dx"></span></p>
+			<p>Risultato (sx): <span id="result_rettangoli_sx"></span></p>
+			<p>Errore: <span id="errore_rettangoli"></p></p>
+		</div>
+		<div>
+			<h3>Metodo Trapezi:</h3>
+			<label for="n_trapezi">N = </label>
+			<input type="number" id="n_trapezi" min="1" value="100"></input>
+			<p>Risultato: <span id="result_trapezi"></span></p>
+			<p>Errore: <span id="errore_trapezi"></span></p>
+		</div>
+		<div>
+			<h3>Metodo Parabole:</h3>
+			<label for="n_simpson">N = </label>
+			<input type="number" id="n_simpson" min="1" value="100"></input>
+			<p>Risultato: <span id="result_simpson"></span></p>
+			<p>Errore: <span id="errore_simpson"></span></p>
+		</div>
+		<input type="submit" value="Aggiorna manualmente" />
 		<div id="plot"></div>
 	</form>
 	<script>
-	  function draw() {
-		 try {
-		   const expression = document.getElementById('eq').value
-			const integ_min = document.getElementById('min').value
-			const integ_max = document.getElementById('max').value
-			const sensibilita = document.getElementById('sensibilita').value
-		   const expr = math.compile(expression)
+		function simpson(vett) {
+			var r = vett[0] + vett[vett.length-1], pari = 0, dispari = 0;
+			for (var i = 1; i < vett.length - 1; i++) {
+				if (i % 2 == 0) {
+					pari += vett[i];
+				}
+				else {
+					dispari += vett[i];
+				}
+			}
+			r += 2 * pari + 4 * dispari;
+			return r;
+		}
+		function trapezi(vett){
+			var r = (vett[0] + vett[vett.length-1])/2;
+			for (var i = 1; i < vett.length - 1; i++) {
+				r += vett[i];
+			}
+			return r;
+		}
+		function rettangoli(vett){
+			var r = 0;
+			for (var i = 0; i < vett.length; i++) {
+				r += vett[i];
+			}
+			return r;
+		}
 
-		   const xValues = math.range(-10, 10, sensibilita).toArray()
-		   const yValues = xValues.map(function (x) {
-		     return expr.evaluate({x: x})
-		   })
+		function draw() {
+			try {
+				const stringa_funzione = document.getElementById('eq').value;
+				const a = parseFloat(document.getElementById('a').value);
+				const b =  parseFloat(document.getElementById('b').value);
+				const sensibilita = parseFloat(document.getElementById('sensibilita').value);
+				const n_rettangoli = parseFloat(document.getElementById('n_rettangoli').value);
+				const n_trapezi = parseFloat(document.getElementById('n_trapezi').value);
+				const n_simpson = parseFloat(document.getElementById('n_simpson').value);
+				const funzione = math.compile(stringa_funzione);
 
-		   const xAreas = xValues.filter(e => e>=math.min(integ_min,integ_max) && e < math.max(integ_min,integ_max)) 
-		   const yAreas = xAreas.map(function (x) {
-		     return expr.evaluate({x: x})
-		   })
+				const xValues = math.range(
+					math.min(-10,math.min(a, b) -1),
+					math.max(10, math.max(a, b) +1),
+					sensibilita
+				).toArray();
 
-		   const trace1 = {
-		     x: xValues,
-		     y: yValues,
-		     type: 'scatter'
-		   }
+				const yValues = xValues.map(function (X) {
+					return funzione.evaluate({ x: X })
+				});
 
-			const trace2 = {
-			  x: xAreas,
-			  y: yAreas,
-			  fill: 'tozeroy',
-			  type: 'scatter',
-  			  mode: 'none'
-			};
+				const xAreas = xValues.filter(
+					X => X >= math.min(a, b) && X <= math.max(a, b)
+				);
+				const yAreas = xAreas.map(function (X) {
+					return funzione.evaluate({ x: X })
+				});
 
-		   const data = [trace1,trace2]
-		   Plotly.newPlot('plot', data)
-		 }
-		 catch (err) {
-		   console.error(err)
-		 }
-	  }
+				const trace1 = {
+					x: xValues,
+					y: yValues,
+					type: 'scatter',
+					name: 'f(x) = '+stringa_funzione
+				};
 
-	  document.getElementById('form').onsubmit = function (event) {
-		 event.preventDefault()
-		 draw()
-	  }
+				const trace2 = {
+					x: xAreas,
+					y: yAreas,
+					fill: 'tozeroy',
+					type: 'scatter',
+					mode: 'none',
+					name: '∫['+a+','+b+'] ('+stringa_funzione+') '+'dx'
+				};
 
-	  draw()
+				const data = [trace1, trace2];
+				Plotly.newPlot('plot', data);
+
+				// Metodo Retangoli
+				const h_rettangoli = (b-a)/n_rettangoli;
+				const x_rettangoli = math.range(
+					math.min(a, b),
+					math.max(a, b),
+					h_rettangoli
+				).toArray();
+				const y_rettangoli = x_rettangoli.map(function (X) {
+					return funzione.evaluate({ x: X })
+				});
+				const result_rettangoli_dx = h_rettangoli*(rettangoli(y_rettangoli)-y_rettangoli[0]);
+				const result_rettangoli_sx = h_rettangoli*(rettangoli(y_rettangoli)-y_rettangoli[y_rettangoli.length-1]);
+				document.getElementById('result_rettangoli_dx').innerHTML = result_rettangoli_dx;
+				document.getElementById('result_rettangoli_sx').innerHTML = result_rettangoli_sx;
+
+				// Errore Rettangoli
+				const funzione_errore_rettangoli = math.derivative(stringa_funzione,'x');
+				x_errore_rettangoli = math.range(
+					math.min(a, b),
+					math.max(a, b),
+					sensibilita
+				).toArray();
+				y_errore_rettangoli = x_rettangoli.map(function (X) {
+					return funzione_errore_rettangoli.evaluate({ x: X })
+				});
+				const M_rettangoli = Math.max.apply(null, y_errore_rettangoli.map(Math.abs));
+				const errore_rettangoli = ((b-a)^2)/(n_rettangoli)*M_rettangoli;
+				document.getElementById('errore_rettangoli').innerHTML = errore_rettangoli;
+
+				// Metodo Trapezi
+				const h_trapezi = (b-a)/n_trapezi;
+				const x_trapezi = math.range(
+					math.min(a, b),
+					math.max(a, b),
+					h_trapezi
+				).toArray();
+				const y_trapezi = x_trapezi.map(function (X) {
+					return funzione.evaluate({ x: X })
+				});
+				const result_trapezi = h_trapezi*trapezi(y_trapezi);
+				document.getElementById('result_trapezi').innerHTML = result_trapezi;
+
+				// Errore Trapezi
+				const funzione_errore_trapezi = math.derivative(math.derivative(stringa_funzione,'x'),'x');
+				x_errore_trapezi = math.range(
+					math.min(a, b),
+					math.max(a, b),
+					sensibilita
+				).toArray();
+				y_errore_trapezi = x_trapezi.map(function (X) {
+					return funzione_errore_trapezi.evaluate({ x: X })
+				});
+				const M_trapezi = Math.max.apply(null, y_errore_trapezi.map(Math.abs));
+				const errore_trapezi = ((b-a)^3)/(12*(n_trapezi)^2)*M_trapezi;
+				document.getElementById('errore_trapezi').innerHTML = errore_trapezi;
+
+				// CAVALIERI SIMPSON (Metodo delle Parabole)
+				const h_simpson = (b-a)/(2*n_simpson);
+				const x_simpson = math.range(
+					math.min(a, b),
+					math.max(a, b),
+					h_simpson
+				).toArray();
+				const y_simpson = x_simpson.map(function (X) {
+					return funzione.evaluate({ x: X })
+				});
+				const result_simpson = h_simpson/3 * simpson(y_simpson);
+				document.getElementById('result_simpson').innerHTML = result_simpson;
+
+
+				// Errore Cavalieri
+				const funzione_errore_simpson = math.derivative(math.derivative(math.derivative(math.derivative(stringa_funzione,'x'),'x'),'x'),'x');
+				x_errore_simpson = math.range(
+					math.min(a, b),
+					math.max(a, b),
+					sensibilita
+				).toArray();
+				y_errore_simpson = x_simpson.map(function (X) {
+					return funzione_errore_simpson.evaluate({ x: X })
+				});
+				const M_simpson = Math.max.apply(null, y_errore_simpson.map(Math.abs));
+				const errore_simpson = ((b-a)^5)/(2880*(n_simpson)^4)*M_simpson;
+				document.getElementById('errore_simpson').innerHTML = errore_simpson;
+			}
+			catch (err) {
+				console.error(err);
+			}
+		}
+
+		document.getElementById('form').onsubmit = function (event) {
+			event.preventDefault();
+			draw();
+		}
+
+		draw();
+	
+	
 	</script>
-
 </body>
 </html>
