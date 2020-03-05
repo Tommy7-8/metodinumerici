@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Metodo numerico</title>
+  <script src="https://unpkg.com/mathjs@6.6.1/dist/math.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://github.com/processing/p5.js/releases/download/1.0.0/p5.min.js"></script>
+</head>
+<body>
+	<form id="form">
+		<input type="text" id="eq" value="5*sin(x)+x^2/10"></input>
+		<input type="number" id="min" value="-5"></input>
+		<input type="number" id="max" value="5"></input>
+		<input type="number" id="sensibilita" value="0.1" min="0.001" max="1" step="0.01"></input>
+		<input type="submit" value="Draw" />
+		<div id="plot"></div>
+	</form>
+	<script>
+	  function draw() {
+		 try {
+		   const expression = document.getElementById('eq').value
+			const integ_min = document.getElementById('min').value
+			const integ_max = document.getElementById('max').value
+			const sensibilita = document.getElementById('sensibilita').value
+		   const expr = math.compile(expression)
+
+		   const xValues = math.range(-10, 10, sensibilita).toArray()
+		   const yValues = xValues.map(function (x) {
+		     return expr.evaluate({x: x})
+		   })
+
+		   const xAreas = xValues.filter(e => e>=math.min(integ_min,integ_max) && e < math.max(integ_min,integ_max)) 
+		   const yAreas = xAreas.map(function (x) {
+		     return expr.evaluate({x: x})
+		   })
+
+		   const trace1 = {
+		     x: xValues,
+		     y: yValues,
+		     type: 'scatter'
+		   }
+
+			const trace2 = {
+			  x: xAreas,
+			  y: yAreas,
+			  fill: 'tozeroy',
+			  type: 'scatter',
+  			  mode: 'none'
+			};
+
+		   const data = [trace1,trace2]
+		   Plotly.newPlot('plot', data)
+		 }
+		 catch (err) {
+		   console.error(err)
+		 }
+	  }
+
+	  document.getElementById('form').onsubmit = function (event) {
+		 event.preventDefault()
+		 draw()
+	  }
+
+	  draw()
+	</script>
+
+</body>
+</html>
